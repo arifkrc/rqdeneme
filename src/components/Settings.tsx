@@ -41,7 +41,7 @@ const Settings = () => {
         sarjNo: 'TEST-001',
         izlenebilirlikNo: 'TEST-IZ-001',
         urunKodu: 'TEST-PRODUCT',
-        input5: 'Test connection',
+        uretimAdet: 'Test connection',
         input6: 'Test data'
       }
 

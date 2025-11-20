@@ -25,12 +25,6 @@ const QRGenerator = () => {
   }
 
   const [userDigit, setUserDigit] = useState('1')
-  const [batchYear, setBatchYear] = useState(() => new Date().getFullYear().toString().slice(-2))
-  const [batchDay, setBatchDay] = useState(() => {
-    const now = new Date()
-    const startOfYear = new Date(now.getFullYear(), 0, 0)
-    return Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24)).toString()
-  })
 
   // Çoklu şarj numarası sistemi
   interface BatchNumber {

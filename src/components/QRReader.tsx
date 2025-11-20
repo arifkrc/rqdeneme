@@ -183,9 +183,9 @@ const QRReader = () => {
                       <div className="data-item">
                         <strong>Ürün Kodu:</strong> {parsedData.urunKodu || 'Belirtilmemiş'}
                       </div>
-                      {parsedData.input5 && (
+                      {parsedData.uretimAdet && (
                         <div className="data-item">
-                          <strong>Ek Bilgi 1:</strong> {parsedData.input5}
+                          <strong>Üretim Adeti:</strong> {parsedData.uretimAdet}
                         </div>
                       )}
                       {parsedData.input6 && (

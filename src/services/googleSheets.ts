@@ -159,7 +159,7 @@ export const saveToGoogleSheets = async (data: QRData): Promise<boolean> => {
         data.sarjNo,
         data.izlenebilirlikNo,
         data.urunKodu,
-        data.input5,
+        data.uretimAdet,
         data.input6,
         new Date().toISOString()
       ]

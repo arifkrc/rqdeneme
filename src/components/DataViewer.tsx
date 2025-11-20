@@ -73,7 +73,7 @@ const DataViewer = () => {
               <div className="table-cell">{item.sarjNo || 'Belirtilmemiş'}</div>
               <div className="table-cell">{item.izlenebilirlikNo || 'Belirtilmemiş'}</div>
               <div className="table-cell">{item.urunKodu || 'Belirtilmemiş'}</div>
-              <div className="table-cell">{item.input5 || 'Belirtilmemiş'}</div>
+              <div className="table-cell">{item.uretimAdet || 'Belirtilmemiş'}</div>
               <div className="table-cell">{item.input6 || 'Belirtilmemiş'}</div>
               <div className="table-cell">QR_APP</div>
             </div>
