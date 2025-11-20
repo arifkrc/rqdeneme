@@ -156,44 +156,45 @@ const QRGenerator = () => {
         const dataUrl = canvas.toDataURL()
         setQrCodeUrl(dataUrl)
         
-        // Save to Google Sheets - Her şarj numarası için ayrı satır
-        console.log('💾 Google Sheets\'e kaydetmeye başlıyor...')
+        // QR kodu hemen göster, Google Sheets kaydetme işlemini arka planda yap
+        console.log('✅ QR kod oluşturuldu, Google Sheets kaydetme işlemi arka planda devam ediyor...')
         setIsSaving(true)
         
-        let allSaveSuccess = true
-        
-        // Her şarj numarası için ayrı kayıt
-        for (const batch of batchNumbers) {
-          const batchData = {
-            ...qrData,
-            sarjNo: generateBatchNumber(batch.year, batch.af, batch.day, batch.letter),
-            uretimAdet: `${batch.quantity} adet` // Batch'e özel üretim adeti
+        // Google Sheets kaydetme işlemini asenkron olarak arka planda yap
+        setTimeout(async () => {
+          try {
+            console.log('💾 Google Sheets\'e kaydetmeye başlıyor...')
+            let allSaveSuccess = true
+            
+            // Tüm batch'leri paralel olarak kaydet (daha hızlı)
+            const savePromises = batchNumbers.map(async (batch) => {
+              const batchData = {
+                ...qrData,
+                sarjNo: generateBatchNumber(batch.year, batch.af, batch.day, batch.letter),
+                uretimAdet: `${batch.quantity} adet`
+              }
+              
+              console.log('📦 Google Sheets\'e gönderilecek veri:', batchData.sarjNo)
+              return await saveToGoogleSheets(batchData)
+            })
+            
+            const results = await Promise.all(savePromises)
+            allSaveSuccess = results.every(result => result)
+            
+            console.log('💾 Kaydetme sonucu:', allSaveSuccess ? 'BAŞARI' : 'HATA')
+            setSaveStatus(allSaveSuccess ? 'success' : 'error')
+            setIsSaving(false)
+            
+            if (allSaveSuccess) {
+              console.log('✅ Tüm şarj numaraları Google Sheets\'e kaydedildi!')
+              console.log(`📊 ${batchNumbers.length} adet şarj numarası kaydedildi`)
+            }
+          } catch (error) {
+            console.error('Google Sheets kaydetme hatası:', error)
+            setSaveStatus('error')
+            setIsSaving(false)
           }
-          
-          console.log('📦 Google Sheets\'e gönderilecek veri:')
-          console.log('   - Şarj No:', batchData.sarjNo)
-          console.log('   - Üretim Adeti:', batchData.uretimAdet)
-          console.log('   - Tam veri:', JSON.stringify(batchData, null, 2))
-          
-          const saveSuccess = await saveToGoogleSheets(batchData)
-          
-          if (!saveSuccess) {
-            allSaveSuccess = false
-          }
-          
-          // Kısa bekleme (rate limiting için)
-          await new Promise(resolve => setTimeout(resolve, 100))
-        }
-        
-        console.log('💾 Kaydetme sonucu:', allSaveSuccess ? 'BAŞARI' : 'HATA')
-        setSaveStatus(allSaveSuccess ? 'success' : 'error')
-        setIsSaving(false)
-        
-        // Kullanıcıya bilgi ver
-        if (allSaveSuccess) {
-          console.log('✅ QR kod oluşturuldu ve tüm şarj numaraları Google Sheets\'e gönderildi!')
-          console.log(`📊 ${batchNumbers.length} adet şarj numarası kaydedildi`)
-        }
+        }, 100) // QR kod gösterildikten 100ms sonra kaydetme işlemini başlat
       }
     } catch (error) {
       console.error('Error generating QR code:', error)

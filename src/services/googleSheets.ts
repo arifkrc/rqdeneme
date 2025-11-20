@@ -24,12 +24,9 @@ export const saveToGoogleSheets = async (data: QRData): Promise<boolean> => {
       console.log('Using default Google Apps Script URL')
     }
     
-    console.log('🚀 Google Sheets\'e veri gönderiliyor...')
-    console.log('📊 Gönderilen veri:', JSON.stringify(data, null, 2))
-    console.log('🔗 Hedef URL:', GOOGLE_APPS_SCRIPT_URL)
+    console.log('🚀 Google Sheets\'e veri gönderiliyor:', data.sarjNo)
     
     // Google Apps Script CORS sorunları nedeniyle direkt no-cors mode kullan
-    console.log('⚠️ CORS sorunları nedeniyle no-cors mode kullanılıyor')
     
     try {
       // No-cors mode ile istek gönder - response okunamaz ama veri gönderilir
@@ -42,24 +39,10 @@ export const saveToGoogleSheets = async (data: QRData): Promise<boolean> => {
         mode: 'no-cors'
       })
       
-      console.log('📤 İstek gönderildi (no-cors mode)')
-      console.log('✅ Response status:', response.status, '(Status 0 = Normal no-cors behavior)')
-      console.log('✅ Response type:', response.type)
-      
       // Status 0 no-cors mode'da normal davranıştır
       if (response.status === 0 && response.type === 'opaque') {
-        console.log('ℹ️ Status 0 = Normal! No-cors mode başarılı olduğunu gösterir')
-        console.log('🎉 Veri Google Sheets\'e gönderildi!')
+        console.log('✅ Veri Google Sheets\'e gönderildi:', data.sarjNo)
       }
-      console.log('ℹ️ No-cors mode nedeniyle response okunamıyor')
-      console.log('👀 Lütfen Google Sheets\'inizi kontrol edin')
-      console.log('📊 Gönderilen veri detayları:')
-      console.log('   - Tarih:', data.tarih)
-      console.log('   - Şarj No:', data.sarjNo) 
-      console.log('   - İzlenebilirlik No:', data.izlenebilirlikNo)
-      console.log('   - Ürün Kodu:', data.urunKodu)
-      console.log('   - Üretim Adeti/Açıklama:', data.uretimAdet)
-      console.log('   - Ek Bilgi 2:', data.input6)
       
       // Yerel olarak da kaydet
       saveToLocalStorage(data)
