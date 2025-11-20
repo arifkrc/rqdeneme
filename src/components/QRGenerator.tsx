@@ -285,6 +285,124 @@ const QRGenerator = () => {
     }
   }
 
+  const printLabel = () => {
+    if (qrCodeUrl) {
+      const printWindow = window.open('', '_blank')
+      if (printWindow) {
+        // Şarj numarası sayısına göre yazı boyutunu hesapla
+        const batchCount = batchNumbers.length
+        let trackingFontSize = '18px'
+        let batchFontSize = '13px'
+        
+        if (batchCount >= 5) {
+          trackingFontSize = '14px'
+          batchFontSize = '10px'
+        } else if (batchCount >= 3) {
+          trackingFontSize = '16px'
+          batchFontSize = '11px'
+        }
+        
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Etiket Yazdırma</title>
+              <style>
+                body {
+                  margin: 0;
+                  padding: 0;
+                  font-family: Arial, sans-serif;
+                  background: white;
+                }
+                .label {
+                  width: 8cm;
+                  height: 6cm;
+                  border: 1px solid #000;
+                  display: flex;
+                  padding: 0.5cm;
+                  box-sizing: border-box;
+                  page-break-after: always;
+                  background: white;
+                }
+                .left-section {
+                  flex: 1;
+                  display: flex;
+                  flex-direction: column;
+                  justify-content: center;
+                  align-items: flex-start;
+                  padding-right: 0.5cm;
+                }
+                .right-section {
+                  width: 3.5cm;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                }
+                .tracking-number {
+                  font-size: ${trackingFontSize};
+                  font-weight: bold;
+                  text-align: left;
+                  margin-bottom: 0.4cm;
+                  word-break: break-all;
+                  line-height: 1.2;
+                  width: 100%;
+                }
+                .batch-list {
+                  font-size: ${batchFontSize};
+                  text-align: left;
+                  line-height: 1.4;
+                  width: 100%;
+                }
+                .batch-item {
+                  margin: 0.15cm 0;
+                  font-weight: 600;
+                }
+                .qr-code {
+                  width: 3.2cm;
+                  height: 3.2cm;
+                  border: 1px solid #ccc;
+                }
+                @media print {
+                  body { margin: 0; padding: 0; }
+                  .label { margin: 0; }
+                }
+                @page {
+                  size: 8cm 6cm;
+                  margin: 0;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="label">
+                <div class="left-section">
+                  <div class="tracking-number">
+                    ${qrData.izlenebilirlikNo}
+                  </div>
+                  <div class="batch-list">
+                    ${batchNumbers.map(batch => `
+                      <div class="batch-item">${generateBatchNumber(batch.year, batch.af, batch.day, batch.letter)} - ${batch.quantity}ad</div>
+                    `).join('')}
+                  </div>
+                </div>
+                <div class="right-section">
+                  <img src="${qrCodeUrl}" alt="QR" class="qr-code" />
+                </div>
+              </div>
+              
+              <script>
+                window.onload = function() {
+                  setTimeout(function() {
+                    window.print();
+                  }, 500);
+                }
+              </script>
+            </body>
+          </html>
+        `)
+        printWindow.document.close()
+      }
+    }
+  }
+
   const clearQRCode = () => {
     const now = new Date()
     const year = now.getFullYear().toString().slice(-2)
@@ -553,9 +671,9 @@ const QRGenerator = () => {
             <label htmlFor="input6">Üretim Bilgileri & Açıklama</label>
             <textarea
               id="input6"
-              value={qrData.input6}
+              value={qrData.input6 === 'Ek bilgiler ve notlar burada yer alır...' ? '' : qrData.input6}
               onChange={(e) => handleInputChange('input6', e.target.value)}
-              placeholder="Detaylı açıklama yazın..."
+              placeholder="Ek bilgiler ve notlar burada yer alır..."
               className="form-textarea"
               rows={4}
               tabIndex={210}
@@ -609,7 +727,10 @@ const QRGenerator = () => {
               📥 İndir
             </button>
             <button onClick={printQRCode} className="print-btn" tabIndex={250}>
-              🖨️ Yazdır
+              🖨️ Yazdır (A4)
+            </button>
+            <button onClick={printLabel} className="print-label-btn" tabIndex={260}>
+              🏷️ Etiket Yazdır
             </button>
           </div>
         )}

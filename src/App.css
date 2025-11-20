@@ -400,6 +400,16 @@
   display: inline;
 }
 
+.quantity-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 120px;
+  max-width: 120px;
+  min-width: 100px;
+  overflow: hidden;
+}
+
 .batch-actions {
   display: flex;
   justify-content: flex-start;
@@ -609,52 +619,10 @@
   flex-wrap: wrap;
 }
 
-.generate-btn, .clear-btn, .download-btn, .print-btn, .copy-btn, .open-btn {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 1rem;
-  transition: all 0.2s ease;
-  min-height: 44px; /* Touch-friendly height */
-}
-
-@media (max-width: 640px) {
-  .generate-btn, .clear-btn, .download-btn, .print-btn, .copy-btn, .open-btn {
-    padding: 1rem 1.5rem;
-    font-size: 1rem;
-    min-height: 48px;
+  .generate-btn, .clear-btn, .download-btn, .print-btn, .print-label-btn, .copy-btn, .open-btn {
+    padding: 0.875rem 1rem;
+    font-size: 0.9rem;
   }
-}
-
-.generate-btn {
-  background: #10b981;
-  color: white;
-  flex: 1;
-}
-
-.generate-btn:hover:not(:disabled) {
-  background: #059669;
-}
-
-.generate-btn:disabled {
-  background: #9ca3af;
-  cursor: not-allowed;
-}
-
-.clear-btn {
-  background: #6b7280;
-  color: white;
-}
-
-.clear-btn:hover {
-  background: #4b5563;
-}
-
-.qr-output {
-  text-align: center;
-}
 
 .qr-canvas {
   margin: 2rem auto;
@@ -696,6 +664,15 @@
 
 .print-btn:hover {
   background: #047857;
+}
+
+.print-label-btn {
+  background: #7c3aed;
+  color: white;
+}
+
+.print-label-btn:hover {
+  background: #6d28d9;
 }
 
 .save-status {
