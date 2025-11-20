@@ -448,7 +448,10 @@ const QRGenerator = () => {
                     </div>
                     
                     <div className="quantity-container">
-                      <label htmlFor={`quantity-${batch.id}`}>Üretim Adeti</label>
+                      <label htmlFor={`quantity-${batch.id}`} className="quantity-label-responsive">
+                        <span className="desktop-label">Üretim Adeti</span>
+                        <span className="mobile-label">Paket Adeti</span>
+                      </label>
                       <input
                         id={`quantity-${batch.id}`}
                         type="number"

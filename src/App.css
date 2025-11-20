@@ -392,6 +392,14 @@
   display: block;
 }
 
+.quantity-label-responsive .mobile-label {
+  display: none;
+}
+
+.quantity-label-responsive .desktop-label {
+  display: inline;
+}
+
 .batch-actions {
   display: flex;
   justify-content: flex-start;
@@ -472,6 +480,20 @@
   
   .quantity-input {
     max-width: 100%;
+    width: 100%;
+  }
+  
+  .quantity-container {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .quantity-label-responsive .desktop-label {
+    display: none;
+  }
+  
+  .quantity-label-responsive .mobile-label {
+    display: inline;
   }
   
   .batch-number-container {
