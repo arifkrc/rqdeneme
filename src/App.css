@@ -301,6 +301,84 @@
   background: #2563eb;
 }
 
+.camera-btn {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  text-align: center;
+  transition: background 0.2s ease;
+  min-height: 44px;
+}
+
+.camera-btn:hover {
+  background: #059669;
+}
+
+.stop-camera-btn {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  text-align: center;
+  transition: background 0.2s ease;
+  min-height: 44px;
+}
+
+.stop-camera-btn:hover {
+  background: #b91c1c;
+}
+
+.camera-section {
+  margin: 2rem 0;
+  text-align: center;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+}
+
+.camera-video {
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  background: #000;
+}
+
+.camera-instruction {
+  margin-top: 1rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  .camera-btn, .stop-camera-btn {
+    padding: 1rem 1.5rem;
+    min-height: 48px;
+    font-size: 1rem;
+  }
+  
+  .camera-video {
+    max-width: 100%;
+  }
+  
+  .camera-section {
+    margin: 1.5rem 0;
+    padding: 1rem;
+  }
+}
+
 .error-message {
   background: #fef2f2;
   color: #dc2626;

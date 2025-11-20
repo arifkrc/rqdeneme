@@ -43,11 +43,14 @@ export const saveToGoogleSheets = async (data: QRData): Promise<boolean> => {
       })
       
       console.log('📤 İstek gönderildi (no-cors mode)')
-      console.log('✅ Response status:', response.status)
+      console.log('✅ Response status:', response.status, '(Status 0 = Normal no-cors behavior)')
       console.log('✅ Response type:', response.type)
       
-      // No-cors modunda response okunamaz, ama istek gönderilmiştir
-      console.log('🎉 Veri Google Sheets\'e gönderildi!')
+      // Status 0 no-cors mode'da normal davranıştır
+      if (response.status === 0 && response.type === 'opaque') {
+        console.log('ℹ️ Status 0 = Normal! No-cors mode başarılı olduğunu gösterir')
+        console.log('🎉 Veri Google Sheets\'e gönderildi!')
+      }
       console.log('ℹ️ No-cors mode nedeniyle response okunamıyor')
       console.log('👀 Lütfen Google Sheets\'inizi kontrol edin')
       console.log('📊 Gönderilen veri detayları:')

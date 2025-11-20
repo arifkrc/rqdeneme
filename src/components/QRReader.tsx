@@ -1,11 +1,68 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import QrScanner from 'qr-scanner'
 
 const QRReader = () => {
   const [result, setResult] = useState('')
   const [isScanning, setIsScanning] = useState(false)
+  const [isCameraActive, setIsCameraActive] = useState(false)
   const [error, setError] = useState('')
+  const [hasCameraSupport, setHasCameraSupport] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const qrScannerRef = useRef<QrScanner | null>(null)
+
+  useEffect(() => {
+    // Check if camera is supported
+    QrScanner.hasCamera().then(hasCamera => {
+      setHasCameraSupport(hasCamera)
+    })
+
+    return () => {
+      // Cleanup camera when component unmounts
+      const scanner = qrScannerRef.current
+      if (scanner) {
+        scanner.stop()
+        scanner.destroy()
+      }
+    }
+  }, [])
+
+  const startCamera = async () => {
+    if (!videoRef.current || !hasCameraSupport) return
+
+    try {
+      setError('')
+      setIsCameraActive(true)
+      
+      qrScannerRef.current = new QrScanner(
+        videoRef.current,
+        (result) => {
+          setResult(result.data)
+          stopCamera()
+        },
+        {
+          returnDetailedScanResult: true,
+          highlightScanRegion: true,
+          highlightCodeOutline: true,
+        }
+      )
+      
+      await qrScannerRef.current.start()
+    } catch (err) {
+      setError('Kamera erişimi sağlanamadı. Lütfen tarayıcı izinlerini kontrol edin.')
+      setIsCameraActive(false)
+      console.error('Camera error:', err)
+    }
+  }
+
+  const stopCamera = () => {
+    if (qrScannerRef.current) {
+      qrScannerRef.current.stop()
+      qrScannerRef.current.destroy()
+      qrScannerRef.current = null
+    }
+    setIsCameraActive(false)
+  }
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -28,6 +85,7 @@ const QRReader = () => {
   const clearResult = () => {
     setResult('')
     setError('')
+    stopCamera()
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -69,10 +127,33 @@ const QRReader = () => {
           {isScanning ? 'Taranıyor...' : 'Resim Dosyası Seç'}
         </label>
         
+        {hasCameraSupport && (
+          <button 
+            onClick={isCameraActive ? stopCamera : startCamera} 
+            className={isCameraActive ? "stop-camera-btn" : "camera-btn"}
+          >
+            {isCameraActive ? 'Kamerayı Durdur' : '📱 Kamera ile Tara'}
+          </button>
+        )}
+        
         <button onClick={clearResult} className="clear-btn">
           Temizle
         </button>
       </div>
+
+      {isCameraActive && (
+        <div className="camera-section">
+          <video 
+            ref={videoRef} 
+            className="camera-video"
+            playsInline
+            muted
+          />
+          <p className="camera-instruction">
+            QR kodu kamera görüş alanına getirin
+          </p>
+        </div>
+      )}
 
       {error && (
         <div className="error-message">

@@ -50,10 +50,18 @@ const QRGenerator = () => {
         setQrCodeUrl(dataUrl)
         
         // Save to Google Sheets
+        console.log('💾 Google Sheets\'e kaydetmeye başlıyor:', qrData)
         setIsSaving(true)
         const saveSuccess = await saveToGoogleSheets(qrData)
+        console.log('💾 Kaydetme sonucu:', saveSuccess ? 'BAŞARI' : 'HATA')
         setSaveStatus(saveSuccess ? 'success' : 'error')
         setIsSaving(false)
+        
+        // Kullanıcıya bilgi ver
+        if (saveSuccess) {
+          console.log('✅ QR kod oluşturuldu ve Google Sheets\'e gönderildi!')
+          console.log('📊 Lütfen "Sayfa1" sheet\'ini kontrol edin')
+        }
       }
     } catch (error) {
       console.error('Error generating QR code:', error)
