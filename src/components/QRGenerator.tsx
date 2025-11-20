@@ -127,16 +127,24 @@ const QRGenerator = () => {
           generateBatchNumber(batch.year, batch.af, batch.day, batch.letter)
         ).join(', ')
         
-        const combinedData = JSON.stringify({
+        const qrDataObject = {
           tarih: qrData.tarih,
           sarjNos: batchNumbersString, // Çoklu şarj numaraları
           izlenebilirlikNo: qrData.izlenebilirlikNo,
           urunKodu: qrData.urunKodu,
           uretimAdet: qrData.uretimAdet,
           input6: qrData.input6
-        })
+        }
         
-        await QRCode.toCanvas(canvas, combinedData, {
+        // QR kod için direkt link oluştur (kullanıcı QR okuttuğunda siteye yönlensin)
+        const baseUrl = 'https://rqdeneme-qcz2.vercel.app/'
+        const encodedData = encodeURIComponent(JSON.stringify(qrDataObject))
+        const qrUrl = `${baseUrl}/?qr=${encodedData}`
+        
+        console.log('🔗 QR kod URL\'si:', qrUrl)
+        console.log('📦 QR kod verisi:', JSON.stringify(qrDataObject, null, 2))
+        
+        await QRCode.toCanvas(canvas, qrUrl, {
           width: 256,
           margin: 2,
           color: {
@@ -162,7 +170,11 @@ const QRGenerator = () => {
             uretimAdet: `${batch.quantity} adet` // Batch'e özel üretim adeti
           }
           
-          console.log('📦 Şarj No kaydet:', batchData.sarjNo, 'Üretim Adeti:', batchData.uretimAdet)
+          console.log('📦 Google Sheets\'e gönderilecek veri:')
+          console.log('   - Şarj No:', batchData.sarjNo)
+          console.log('   - Üretim Adeti:', batchData.uretimAdet)
+          console.log('   - Tam veri:', JSON.stringify(batchData, null, 2))
+          
           const saveSuccess = await saveToGoogleSheets(batchData)
           
           if (!saveSuccess) {

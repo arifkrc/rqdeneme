@@ -68,7 +68,7 @@ function doPost(e) {
       data.sarjNo || '',               // C sütunu: sarjNo
       data.izlenebilirlikNo || '',     // D sütunu: izlenebilirlikNo
       data.urunKodu || '',             // E sütunu: urunKodu
-      data.uretimAdet || data.uretimAdet || '', // F sütunu: uretimAdet (eski uretimAdet uyumluluğu için)
+      data.uretimAdet || data.input5 || '', // F sütunu: uretimAdet (eski input5 uyumluluğu için)
       data.input6 || '',               // G sütunu: input6
       'QR_APP'                         // H sütunu: source
     ];

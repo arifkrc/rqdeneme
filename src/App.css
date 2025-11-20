@@ -666,6 +666,15 @@
   background: #047857;
 }
 
+.etiket-btn {
+  background: #7c3aed !important;
+  color: white !important;
+}
+
+.etiket-btn:hover {
+  background: #6d28d9 !important;
+}
+
 .print-label-btn {
   background: #7c3aed;
   color: white;
@@ -1000,6 +1009,46 @@
     width: 100%;
     margin-bottom: 0.5rem;
   }
+}
+
+/* QR Code Display Styles */
+.qr-code-display {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.qr-code-display h4 {
+  color: #374151;
+  margin-bottom: 1rem;
+  font-size: 1.125rem;
+}
+
+.qr-code-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.qr-canvas-display {
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  max-width: 200px;
+  height: auto;
+}
+
+.qr-info {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0;
+  max-width: 300px;
+  line-height: 1.4;
 }
 
 .data-grid {

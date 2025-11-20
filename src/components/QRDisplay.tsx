@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect, useRef } from 'react'
+import QRCode from 'qrcode'
 
 interface QRDisplayProps {
   qrData?: string
@@ -16,6 +17,8 @@ interface ParsedQRData {
 }
 
 const QRDisplay = ({ qrData }: QRDisplayProps) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  
   // URL parametrelerinden veya props'tan QR kodunu al
   const { result, error } = useMemo(() => {
     const urlParams = new URLSearchParams(window.location.search)
@@ -48,6 +51,25 @@ const QRDisplay = ({ qrData }: QRDisplayProps) => {
     }
   }, [result])
 
+  // QR kodu oluştur ve göster (sadece parse edilmiş veri varsa)
+  useEffect(() => {
+    if (result && parsedData && canvasRef.current) {
+      // Mevcut URL'yi QR kod olarak oluştur
+      const currentUrl = window.location.href
+      
+      QRCode.toCanvas(canvasRef.current, currentUrl, {
+        width: 200,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      }).catch((error) => {
+        console.error('QR kod oluşturma hatası:', error)
+      })
+    }
+  }, [result, parsedData])
+
   const downloadData = () => {
     if (!result) return
     
@@ -74,15 +96,15 @@ const QRDisplay = ({ qrData }: QRDisplayProps) => {
     }
   }
 
-  const printData = () => {
-    if (!result) return
+  const printA4 = () => {
+    if (!result || !parsedData) return
     
     const printWindow = window.open('', '_blank')
     if (printWindow) {
       printWindow.document.write(`
         <html>
           <head>
-            <title>QR Kod Verileri</title>
+            <title>QR Kod Verileri - A4 Yazdırma</title>
             <style>
               body {
                 margin: 0;
@@ -196,6 +218,140 @@ const QRDisplay = ({ qrData }: QRDisplayProps) => {
     }
   }
 
+  const printEtiket = () => {
+    const printWindow = window.open('', '_blank')
+    if (printWindow) {
+      printWindow.document.open()
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>QR Kod Etiketi - 8x6cm</title>
+            <style>
+              * { box-sizing: border-box; }
+              body { 
+                font-family: Arial, sans-serif; 
+                margin: 0; 
+                padding: 10px;
+                background: white;
+                color: #333;
+                font-size: 10px;
+                line-height: 1.2;
+              }
+              .label {
+                width: 8cm;
+                height: 6cm;
+                border: 1px solid #333;
+                padding: 8px;
+                margin: 0 auto;
+                background: white;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+              }
+              .header {
+                text-align: center;
+                border-bottom: 1px solid #333;
+                padding-bottom: 3px;
+                margin-bottom: 3px;
+              }
+              .header h2 {
+                margin: 0;
+                font-size: 12px;
+                font-weight: bold;
+              }
+              .data-row {
+                display: flex;
+                margin-bottom: 2px;
+                font-size: 9px;
+              }
+              .data-label {
+                font-weight: bold;
+                width: 2.5cm;
+                flex-shrink: 0;
+              }
+              .data-value {
+                font-weight: normal;
+                word-break: break-all;
+                flex: 1;
+              }
+              .qr-section {
+                text-align: center;
+                margin-top: 3px;
+                font-size: 8px;
+              }
+              @media print {
+                body { 
+                  margin: 0; 
+                  padding: 0;
+                }
+                .label {
+                  page-break-inside: avoid;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="label">
+              <div class="header">
+                <h2>QR Etiket</h2>
+              </div>
+              
+              <div class="content">
+                ${parsedData ? `
+                  <div class="data-row">
+                    <div class="data-label">Tarih:</div>
+                    <div class="data-value">${parsedData.tarih || '-'}</div>
+                  </div>
+                  
+                  <div class="data-row">
+                    <div class="data-label">Şarj No:</div>
+                    <div class="data-value">${parsedData.sarjNo || parsedData.sarjNos || '-'}</div>
+                  </div>
+                  
+                  <div class="data-row">
+                    <div class="data-label">İzleme:</div>
+                    <div class="data-value">${parsedData.izlenebilirlikNo || '-'}</div>
+                  </div>
+                  
+                  <div class="data-row">
+                    <div class="data-label">Ürün:</div>
+                    <div class="data-value">${parsedData.urunKodu || '-'}</div>
+                  </div>
+                  
+                  ${parsedData.uretimAdet ? `
+                    <div class="data-row">
+                      <div class="data-label">Adet:</div>
+                      <div class="data-value">${parsedData.uretimAdet}</div>
+                    </div>
+                  ` : ''}
+                ` : `
+                  <div class="data-row">
+                    <div class="data-label">Veri:</div>
+                    <div class="data-value">${result}</div>
+                  </div>
+                `}
+              </div>
+              
+              <div class="qr-section">
+                <small>QR: ${window.location.origin}</small>
+              </div>
+            </div>
+            
+            <script>
+              window.onload = function() {
+                setTimeout(function() {
+                  window.print();
+                }, 500);
+              }
+            </script>
+          </body>
+        </html>
+      `)
+      printWindow.document.close()
+    }
+  }
+
   if (error) {
     return (
       <div className="qr-display error">
@@ -234,15 +390,19 @@ const QRDisplay = ({ qrData }: QRDisplayProps) => {
     <div className="qr-display">
       <h2>📱 QR Kod Verileri</h2>
       
+      {/* QR Kod Gösterimi - Sadece veri varsa */}
+      {parsedData && (
+        <div className="qr-code-display">
+          <h4>🎯 Bu Sayfanın QR Kodu</h4>
+          <div className="qr-code-container">
+            <canvas ref={canvasRef} className="qr-canvas-display" />
+            <p className="qr-info">Bu QR kodu tarayarak aynı sayfaya erişebilirsiniz</p>
+          </div>
+        </div>
+      )}
+
       {parsedData ? (
         <div className="structured-result">
-          <div className="qr-preview">
-            <h4>📱 QR Kod İçeriği</h4>
-            <div className="json-display">
-              <pre>{JSON.stringify(parsedData, null, 2)}</pre>
-            </div>
-          </div>
-          
           <div className="data-grid">
             <div className="data-item">
               <strong>📅 Tarih:</strong> {parsedData.tarih || 'Belirtilmemiş'}
@@ -284,8 +444,11 @@ const QRDisplay = ({ qrData }: QRDisplayProps) => {
         <button onClick={downloadData} className="download-btn">
           📥 İndir
         </button>
-        <button onClick={printData} className="print-btn">
-          🖨️ Yazdır
+        <button onClick={printA4} className="print-btn">
+          🖨️ A4 Yazdır
+        </button>
+        <button onClick={printEtiket} className="print-btn etiket-btn">
+          🏷️ Etiket (8x6)
         </button>
         <button onClick={() => window.location.href = '/'} className="back-btn">
           🏠 Ana Sayfa
