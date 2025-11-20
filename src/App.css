@@ -391,11 +391,6 @@
   margin-bottom: 0.125rem;
   display: block;
 }
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 0.25rem;
-}
 
 .batch-actions {
   display: flex;
