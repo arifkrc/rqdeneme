@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Apps Script Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .button { padding: 10px 20px; margin: 10px; background: #4285f4; color: white; border: none; cursor: pointer; }
+        .result { margin: 10px 0; padding: 10px; border: 1px solid #ccc; background: #f9f9f9; }
+        .error { background: #ffebee; border-color: #f44336; }
+        .success { background: #e8f5e8; border-color: #4caf50; }
+    </style>
+</head>
+<body>
+    <h1>Google Apps Script Connection Test</h1>
+    <p><strong>Script URL:</strong> https://script.google.com/macros/s/AKfycbxCP1Oz-tuZmufBuVgwLMSKzWxr82BQJG4QpIGKMYoYpnhXUVRb22yaOvyBK2l6JvojxQ/exec</p>
+    
+    <button class="button" onclick="testGet()">Test GET (Connection)</button>
+    <button class="button" onclick="testPost()">Test POST (Send Data)</button>
+    <button class="button" onclick="clearResults()">Clear Results</button>
+    
+    <div id="results"></div>
+
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxCP1Oz-tuZmufBuVgwLMSKzWxr82BQJG4QpIGKMYoYpnhXUVRb22yaOvyBK2l6JvojxQ/exec';
+
+        function addResult(message, isError = false) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${isError ? 'error' : 'success'}`;
+            div.innerHTML = `<strong>${new Date().toLocaleString()}:</strong> ${message}`;
+            results.appendChild(div);
+        }
+
+        async function testGet() {
+            addResult('Testing GET request...');
+            try {
+                const response = await fetch(SCRIPT_URL, { method: 'GET' });
+                addResult(`GET Response Status: ${response.status}`);
+                
+                const text = await response.text();
+                addResult(`GET Response: ${text}`);
+                
+                try {
+                    const json = JSON.parse(text);
+                    addResult(`✅ GET Success: ${json.message}`);
+                } catch {
+                    addResult(`GET returned non-JSON: ${text}`);
+                }
+            } catch (error) {
+                addResult(`❌ GET Error: ${error.message}`, true);
+            }
+        }
+
+        async function testPost() {
+            const testData = {
+                tarih: '2025-11-20',
+                sarjNo: 'TEST-HTML-001',
+                izlenebilirlikNo: 'HTML-IZ-001',
+                urunKodu: 'HTML-PRODUCT',
+                input5: 'HTML test data',
+                input6: 'Direct HTML test'
+            };
+
+            addResult('Testing POST request with data: ' + JSON.stringify(testData));
+            
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                addResult(`POST Response Status: ${response.status}`);
+                
+                const text = await response.text();
+                addResult(`POST Response: ${text}`);
+                
+                try {
+                    const json = JSON.parse(text);
+                    if (json.success) {
+                        addResult(`✅ POST Success: ${json.message}`);
+                        addResult(`📊 Check your Google Sheets now!`);
+                    } else {
+                        addResult(`❌ POST Failed: ${json.error}`, true);
+                    }
+                } catch {
+                    addResult(`POST returned non-JSON: ${text}`);
+                }
+            } catch (error) {
+                addResult(`❌ POST Error: ${error.message}`, true);
+                addResult(`This might be a CORS error. Check Google Sheets to see if data was still saved.`);
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+    </script>
+</body>
+</html>
