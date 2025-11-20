@@ -18,7 +18,7 @@ export const saveToGoogleSheets = async (data: QRData): Promise<boolean> => {
     
     // If not configured, use the provided URL
     if (!GOOGLE_APPS_SCRIPT_URL || GOOGLE_APPS_SCRIPT_URL.trim() === '') {
-      GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxCP1Oz-tuZmufBuVgwLMSKzWxr82BQJG4QpIGKMYoYpnhXUVRb22yaOvyBK2l6JvojxQ/exec'
+      GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzlE8DGJG23ba2Fxd0u4eRqQYh1h6JZ2N3vhA_nXa9c1UL_rpvi1G-g58lDQnNNo51jEw/exec'
       // Save it to localStorage for future use
       localStorage.setItem('googleAppsScriptUrl', GOOGLE_APPS_SCRIPT_URL)
       console.log('Using default Google Apps Script URL')

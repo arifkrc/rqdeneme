@@ -12,7 +12,7 @@ const Settings = () => {
       setScriptUrl(savedUrl)
     } else {
       // Set default URL
-      const defaultUrl = 'https://script.google.com/macros/s/AKfycbxCP1Oz-tuZmufBuVgwLMSKzWxr82BQJG4QpIGKMYoYpnhXUVRb22yaOvyBK2l6JvojxQ/exec'
+      const defaultUrl = 'https://script.google.com/macros/s/AKfycbzlE8DGJG23ba2Fxd0u4eRqQYh1h6JZ2N3vhA_nXa9c1UL_rpvi1G-g58lDQnNNo51jEw/exec'
       setScriptUrl(defaultUrl)
       localStorage.setItem('googleAppsScriptUrl', defaultUrl)
     }
