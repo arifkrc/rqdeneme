@@ -10,7 +10,7 @@ const testGoogleAppsScript = async () => {
     sarjNo: 'CONSOLE-TEST-001',
     izlenebilirlikNo: 'CONSOLE-IZ-001', 
     urunKodu: 'CONSOLE-PRODUCT',
-    input5: 'Console test data',
+    uretimAdet: 'Console test data',
     input6: 'Direct browser test'
   }
   

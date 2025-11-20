@@ -60,7 +60,7 @@ function doPost(e) {
       console.log('Kullanılan sheet:', sheet.getName());
     }
     
-    // Veri satırını hazırla (sütun sırası: timestamp, tarih, sarjNo, izlenebilirlikNo, urunKodu, input5, input6, source)
+    // Veri satırını hazırla (sütun sırası: timestamp, tarih, sarjNo, izlenebilirlikNo, urunKodu, uretimAdet, input6, source)
     const timestamp = new Date().toISOString();
     const rowData = [
       timestamp,                        // A sütunu: timestamp
@@ -68,7 +68,7 @@ function doPost(e) {
       data.sarjNo || '',               // C sütunu: sarjNo
       data.izlenebilirlikNo || '',     // D sütunu: izlenebilirlikNo
       data.urunKodu || '',             // E sütunu: urunKodu
-      data.input5 || '',               // F sütunu: input5
+      data.uretimAdet || data.uretimAdet || '', // F sütunu: uretimAdet (eski uretimAdet uyumluluğu için)
       data.input6 || '',               // G sütunu: input6
       'QR_APP'                         // H sütunu: source
     ];
@@ -97,7 +97,7 @@ function doPost(e) {
         sarjNo: data.sarjNo,
         izlenebilirlikNo: data.izlenebilirlikNo,
         urunKodu: data.urunKodu,
-        input5: data.input5,
+        uretimAdet: data.uretimAdet || data.uretimAdet,
         input6: data.input6
       }
     };
@@ -165,7 +165,7 @@ function doGet(e) {
         sarjNo: e.parameter.sarjNo || '',
         izlenebilirlikNo: e.parameter.izlenebilirlikNo || '',
         urunKodu: e.parameter.urunKodu || '',
-        input5: e.parameter.input5 || '',
+        uretimAdet: e.parameter.uretimAdet || e.parameter.uretimAdet || '',
         input6: e.parameter.input6 || ''
       };
       
@@ -179,7 +179,7 @@ function doGet(e) {
         data.sarjNo,                     // sarjNo
         data.izlenebilirlikNo,           // izlenebilirlikNo
         data.urunKodu,                   // urunKodu
-        data.input5,                     // input5
+        data.uretimAdet,                 // uretimAdet (eski uretimAdet uyumluluğu için)
         data.input6,                     // input6
         e.parameter.source || 'QR_APP_GET'  // source
       ];
@@ -264,7 +264,7 @@ function testFunction() {
     sarjNo: 'TEST-001',
     izlenebilirlikNo: 'IZ-TEST-001',
     urunKodu: '6312011',
-    input5: 'Test verisi 1',
+    uretimAdet: 'Test verisi 1',
     input6: 'Test verisi 2'
   };
   

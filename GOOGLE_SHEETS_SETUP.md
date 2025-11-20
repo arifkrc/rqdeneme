@@ -50,7 +50,7 @@ Your spreadsheet columns (matching your existing headers):
 - **Column C**: sarjNo (Batch number from form)
 - **Column D**: izlenebilirlikNo (Traceability number from form)
 - **Column E**: urunKodu (Product code from form)
-- **Column F**: input5 (Additional info 1 from form)
+- **Column F**: uretimAdet (Additional info 1 from form)
 - **Column G**: input6 (Additional info 2 from form)
 - **Column H**: source (Always "QR_APP" to identify data source)
 

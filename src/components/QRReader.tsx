@@ -28,24 +28,33 @@ const QRReader = () => {
   }, [])
 
   const startCamera = async () => {
-    if (!videoRef.current || !hasCameraSupport) return
+    if (!videoRef.current) {
+      setError('Video elementi bulunamadı.')
+      return
+    }
+
+    if (!hasCameraSupport) {
+      setError('Bu cihazda kamera desteği bulunmuyor.')
+      return  
+    }
 
     try {
       setError('')
+      setIsCameraActive(true)
       
-      // Kamera izni kontrolü
-      const permission = await navigator.permissions.query({ name: 'camera' as PermissionName })
-      
-      if (permission.state === 'denied') {
-        setError('Kamera izni reddedildi. Lütfen tarayıcı ayarlarından kamera izni verin.')
-        return
+      // Önce mevcut scanner'ı temizle
+      if (qrScannerRef.current) {
+        qrScannerRef.current.stop()
+        qrScannerRef.current.destroy()
+        qrScannerRef.current = null
       }
       
-      setIsCameraActive(true)
+      console.log('🎥 Kamera başlatılıyor...')
       
       qrScannerRef.current = new QrScanner(
         videoRef.current,
         (result) => {
+          console.log('📱 QR kod tarandı:', result.data)
           setResult(result.data)
           stopCamera()
         },
@@ -53,11 +62,14 @@ const QRReader = () => {
           returnDetailedScanResult: true,
           highlightScanRegion: true,
           highlightCodeOutline: true,
-          preferredCamera: 'environment' // Arka kamera tercih et
+          preferredCamera: 'environment', // Arka kamera tercih et
+          maxScansPerSecond: 5 // Performans iyileştirmesi
         }
       )
       
+      console.log('📷 Scanner oluşturuldu, başlatılıyor...')
       await qrScannerRef.current.start()
+      console.log('✅ Kamera başarıyla başlatıldı!')
     } catch (err) {
       let errorMessage = 'Kamera erişimi sağlanamadı.'
       
