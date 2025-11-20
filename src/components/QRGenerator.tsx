@@ -728,11 +728,11 @@ const QRGenerator = () => {
       <div className="qr-output">
         <canvas 
           ref={canvasRef}
-          style={{ display: qrCodeUrl ? 'block' : 'none' }}
+          style={{ display: qrCodeUrl && !isGenerating && !isSaving ? 'block' : 'none' }}
           className="qr-canvas"
         />
         
-        {qrCodeUrl && (
+        {qrCodeUrl && !isGenerating && !isSaving && (
           <div className="download-section">
             <button onClick={downloadQRCode} className="download-btn" tabIndex={240}>
               📥 İndir
