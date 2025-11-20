@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import QRGenerator from './components/QRGenerator'
 import QRReader from './components/QRReader'
-import DataViewer from './components/DataViewer'
 import Settings from './components/Settings'
 import './App.css'
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'generator' | 'reader' | 'data' | 'settings'>('generator')
+  const [activeTab, setActiveTab] = useState<'generator' | 'reader' | 'settings'>('generator')
 
   return (
     <div className="app">
@@ -26,12 +25,6 @@ function App() {
             QR Kod Oku
           </button>
           <button 
-            className={activeTab === 'data' ? 'active' : ''} 
-            onClick={() => setActiveTab('data')}
-          >
-            Kayıtlı Veriler
-          </button>
-          <button 
             className={activeTab === 'settings' ? 'active' : ''} 
             onClick={() => setActiveTab('settings')}
           >
@@ -43,7 +36,6 @@ function App() {
       <main className="app-main">
         {activeTab === 'generator' && <QRGenerator />}
         {activeTab === 'reader' && <QRReader />}
-        {activeTab === 'data' && <DataViewer />}
         {activeTab === 'settings' && <Settings />}
       </main>
     </div>

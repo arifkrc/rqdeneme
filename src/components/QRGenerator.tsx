@@ -1,16 +1,117 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import QRCode from 'qrcode'
 import { saveToGoogleSheets, type QRData } from '../services/googleSheets'
 
 const QRGenerator = () => {
-  const [qrData, setQrData] = useState<QRData>({
-    tarih: new Date().toISOString().split('T')[0], // Bugünün tarihi
-    sarjNo: `SRJ-${Date.now().toString().slice(-6)}`, // Rastgele şarj no
-    izlenebilirlikNo: `IZ-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`, // Rastgele izlenebilirlik no
-    urunKodu: '6312011',
-    input5: 'Kalite kontrol onaylandı',
-    input6: `Ambar-${String.fromCharCode(65 + Math.floor(Math.random() * 26))}-${Math.floor(Math.random() * 50) + 1}`
+  // İzlenebilirlik numarası oluşturma fonksiyonu
+  const generateTrackingNumber = (lastDigit: string = '1') => {
+    const now = new Date()
+    const year = now.getFullYear().toString().slice(-2) // Yılın son 2 hanesi
+    const startOfYear = new Date(now.getFullYear(), 0, 0)
+    const dayOfYear = Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24)) // Yılın günü
+    const hour = now.getHours()
+    
+    // Vardiya belirleme: 00:00-08:00 = A, 08:00-16:00 = B, 16:00-24:00 = C
+    let shift = 'A'
+    if (hour >= 8 && hour < 16) shift = 'B'
+    else if (hour >= 16) shift = 'C'
+    
+    return `${dayOfYear.toString().padStart(3, '0')}${year}${shift}${lastDigit}`
+  }
+
+  // Şarj numarası oluşturma fonksiyonu
+  const generateBatchNumber = (year: string, afChoice: string, dayOfYear: string, letterChoice: string) => {
+    return `${year}${afChoice}${dayOfYear.padStart(3, '0')}${letterChoice}`
+  }
+
+  const [userDigit, setUserDigit] = useState('1')
+  const [batchYear, setBatchYear] = useState(() => new Date().getFullYear().toString().slice(-2))
+  const [batchDay, setBatchDay] = useState(() => {
+    const now = new Date()
+    const startOfYear = new Date(now.getFullYear(), 0, 0)
+    return Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24)).toString()
   })
+
+  // Çoklu şarj numarası sistemi
+  interface BatchNumber {
+    id: string
+    year: string
+    af: string
+    day: string
+    letter: string
+    quantity: string // Üretim adeti
+  }
+
+  const [batchNumbers, setBatchNumbers] = useState<BatchNumber[]>([
+    { id: '1', year: new Date().getFullYear().toString().slice(-2), af: 'F', day: Math.floor((new Date().getTime() - new Date(new Date().getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24)).toString(), letter: 'A', quantity: '10' },
+    { id: '2', year: new Date().getFullYear().toString().slice(-2), af: 'F', day: Math.floor((new Date().getTime() - new Date(new Date().getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24)).toString(), letter: 'B', quantity: '15' },
+    { id: '3', year: new Date().getFullYear().toString().slice(-2), af: 'F', day: Math.floor((new Date().getTime() - new Date(new Date().getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24)).toString(), letter: 'C', quantity: '20' }
+  ])
+  const [qrData, setQrData] = useState<QRData>({
+    tarih: '', // Sunucudan gelecek
+    sarjNo: '', // Şimdi çoklu olacak
+    izlenebilirlikNo: generateTrackingNumber('1'),
+    urunKodu: '6312011',
+    uretimAdet: 'Kalite kontrol onaylandı.\nÜretim standardına uygun.\nAmbalajlama tamamlandı.',
+    input6: 'Ek bilgiler ve notlar burada yer alır...'
+  })
+
+  // Şarj numarası fonksiyonları
+  const addBatchNumber = () => {
+    const newId = (batchNumbers.length + 1).toString()
+    const now = new Date()
+    const year = now.getFullYear().toString().slice(-2)
+    const startOfYear = new Date(now.getFullYear(), 0, 0)
+    const day = Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24)).toString()
+    
+    setBatchNumbers(prev => [...prev, {
+      id: newId,
+      year: year,
+      af: 'F',
+      day: day,
+      letter: 'A',
+      quantity: '1'
+    }])
+  }
+
+  const removeBatchNumber = (id: string) => {
+    if (batchNumbers.length > 1) {
+      setBatchNumbers(prev => prev.filter(batch => batch.id !== id))
+    }
+  }
+
+  const updateBatchNumber = (id: string, field: keyof BatchNumber, value: string) => {
+    setBatchNumbers(prev => 
+      prev.map(batch => 
+        batch.id === id ? { ...batch, [field]: value } : batch
+      )
+    )
+  }
+
+  // Tarih sunucudan çek
+  useEffect(() => {
+    const fetchServerDate = () => {
+      const serverDate = new Date().toISOString().split('T')[0]
+      setQrData(prev => ({ ...prev, tarih: serverDate }))
+    }
+    
+    fetchServerDate()
+    // Her 30 saniyede bir güncelle
+    const interval = setInterval(fetchServerDate, 30000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Kullanıcı digit değiştiğinde izlenebilirlik numarasını güncelle
+  useEffect(() => {
+    // userDigit'in geçerli olduğundan emin ol
+    const validDigit = userDigit === '' ? '1' : userDigit
+    console.log('Updating tracking number with digit:', validDigit)
+    
+    setQrData(prev => ({ 
+      ...prev, 
+      izlenebilirlikNo: generateTrackingNumber(validDigit) 
+    }))
+  }, [userDigit])
   const [qrCodeUrl, setQrCodeUrl] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -27,13 +128,17 @@ const QRGenerator = () => {
     try {
       const canvas = canvasRef.current
       if (canvas) {
-        // Combine all data into a structured format
+        // Combine all data into a structured format including all batch numbers
+        const batchNumbersString = batchNumbers.map(batch => 
+          generateBatchNumber(batch.year, batch.af, batch.day, batch.letter)
+        ).join(', ')
+        
         const combinedData = JSON.stringify({
           tarih: qrData.tarih,
-          sarjNo: qrData.sarjNo,
+          sarjNos: batchNumbersString, // Çoklu şarj numaraları
           izlenebilirlikNo: qrData.izlenebilirlikNo,
           urunKodu: qrData.urunKodu,
-          input5: qrData.input5,
+          uretimAdet: qrData.uretimAdet,
           input6: qrData.input6
         })
         
@@ -49,18 +154,39 @@ const QRGenerator = () => {
         const dataUrl = canvas.toDataURL()
         setQrCodeUrl(dataUrl)
         
-        // Save to Google Sheets
-        console.log('💾 Google Sheets\'e kaydetmeye başlıyor:', qrData)
+        // Save to Google Sheets - Her şarj numarası için ayrı satır
+        console.log('💾 Google Sheets\'e kaydetmeye başlıyor...')
         setIsSaving(true)
-        const saveSuccess = await saveToGoogleSheets(qrData)
-        console.log('💾 Kaydetme sonucu:', saveSuccess ? 'BAŞARI' : 'HATA')
-        setSaveStatus(saveSuccess ? 'success' : 'error')
+        
+        let allSaveSuccess = true
+        
+        // Her şarj numarası için ayrı kayıt
+        for (const batch of batchNumbers) {
+          const batchData = {
+            ...qrData,
+            sarjNo: generateBatchNumber(batch.year, batch.af, batch.day, batch.letter),
+            uretimAdet: `${batch.quantity} adet` // Batch'e özel üretim adeti
+          }
+          
+          console.log('📦 Şarj No kaydet:', batchData.sarjNo, 'Üretim Adeti:', batchData.uretimAdet)
+          const saveSuccess = await saveToGoogleSheets(batchData)
+          
+          if (!saveSuccess) {
+            allSaveSuccess = false
+          }
+          
+          // Kısa bekleme (rate limiting için)
+          await new Promise(resolve => setTimeout(resolve, 100))
+        }
+        
+        console.log('💾 Kaydetme sonucu:', allSaveSuccess ? 'BAŞARI' : 'HATA')
+        setSaveStatus(allSaveSuccess ? 'success' : 'error')
         setIsSaving(false)
         
         // Kullanıcıya bilgi ver
-        if (saveSuccess) {
-          console.log('✅ QR kod oluşturuldu ve Google Sheets\'e gönderildi!')
-          console.log('📊 Lütfen "Sayfa1" sheet\'ini kontrol edin')
+        if (allSaveSuccess) {
+          console.log('✅ QR kod oluşturuldu ve tüm şarj numaraları Google Sheets\'e gönderildi!')
+          console.log(`📊 ${batchNumbers.length} adet şarj numarası kaydedildi`)
         }
       }
     } catch (error) {
@@ -81,14 +207,109 @@ const QRGenerator = () => {
     }
   }
 
+  const printQRCode = () => {
+    if (qrCodeUrl) {
+      const printWindow = window.open('', '_blank')
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>QR Kod Yazdırma</title>
+              <style>
+                body {
+                  margin: 0;
+                  padding: 20px;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  font-family: Arial, sans-serif;
+                }
+                .print-container {
+                  text-align: center;
+                  max-width: 600px;
+                }
+                .qr-image {
+                  max-width: 300px;
+                  height: auto;
+                  border: 2px solid #000;
+                  margin: 20px 0;
+                }
+                .info {
+                  margin: 10px 0;
+                  font-size: 14px;
+                }
+                .batch-info {
+                  background: #f5f5f5;
+                  padding: 15px;
+                  border-radius: 5px;
+                  margin: 20px 0;
+                }
+                @media print {
+                  body { margin: 0; }
+                  .no-print { display: none; }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="print-container">
+                <h2>QR Kod Çıktısı</h2>
+                <div class="info"><strong>Tarih:</strong> ${qrData.tarih}</div>
+                <div class="info"><strong>Ürün Kodu:</strong> ${qrData.urunKodu}</div>
+                <div class="info"><strong>İzlenebilirlik No:</strong> ${qrData.izlenebilirlikNo}</div>
+                
+                <img src="${qrCodeUrl}" alt="QR Kod" class="qr-image" />
+                
+                <div class="batch-info">
+                  <h3>Şarj Numaraları</h3>
+                  ${batchNumbers.map(batch => `
+                    <div><strong>${generateBatchNumber(batch.year, batch.af, batch.day, batch.letter)}</strong> - ${batch.quantity} adet</div>
+                  `).join('')}
+                </div>
+                
+                <div class="info">
+                  <strong>Açıklama:</strong><br>
+                  ${qrData.input6.replace(/\n/g, '<br>')}
+                </div>
+                
+                <div class="info" style="margin-top: 30px; font-size: 12px; color: #666;">
+                  Yazdırma Tarihi: ${new Date().toLocaleString('tr-TR')}
+                </div>
+              </div>
+              
+              <script>
+                window.onload = function() {
+                  setTimeout(function() {
+                    window.print();
+                  }, 500);
+                }
+              </script>
+            </body>
+          </html>
+        `)
+        printWindow.document.close()
+      }
+    }
+  }
+
   const clearQRCode = () => {
+    const now = new Date()
+    const year = now.getFullYear().toString().slice(-2)
+    const startOfYear = new Date(now.getFullYear(), 0, 0)
+    const day = Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24)).toString()
+    
+    setBatchNumbers([
+      { id: '1', year: year, af: 'F', day: day, letter: 'A', quantity: '10' },
+      { id: '2', year: year, af: 'F', day: day, letter: 'B', quantity: '15' },
+      { id: '3', year: year, af: 'F', day: day, letter: 'C', quantity: '20' }
+    ])
+    setUserDigit('1')
     setQrData({
       tarih: new Date().toISOString().split('T')[0], // Bugünün tarihi
-      sarjNo: `SRJ-${Date.now().toString().slice(-6)}`, // Rastgele şarj no
-      izlenebilirlikNo: `IZ-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`, // Rastgele izlenebilirlik no
+      sarjNo: '',
+      izlenebilirlikNo: generateTrackingNumber('1'),
       urunKodu: '6312011',
-      input5: 'Kalite kontrol onaylandı',
-      input6: `Ambar-${String.fromCharCode(65 + Math.floor(Math.random() * 26))}-${Math.floor(Math.random() * 50) + 1}`
+      uretimAdet: 'Kalite kontrol onaylandı.\nÜretim standardına uygun.\nAmbalajlama tamamlandı.',
+      input6: 'Ek bilgiler ve notlar burada yer alır...'
     })
     setQrCodeUrl('')
     setSaveStatus('idle')
@@ -112,42 +333,8 @@ const QRGenerator = () => {
       <h2>QR Kod Oluştur</h2>
       
       <div className="input-section">
-        <div className="input-grid">
-          <div className="input-group">
-            <label htmlFor="tarih">Tarih</label>
-            <input
-              id="tarih"
-              type="date"
-              value={qrData.tarih}
-              onChange={(e) => handleInputChange('tarih', e.target.value)}
-              className="form-input"
-            />
-          </div>
-          
-          <div className="input-group">
-            <label htmlFor="sarjNo">Şarj No</label>
-            <input
-              id="sarjNo"
-              type="text"
-              value={qrData.sarjNo}
-              onChange={(e) => handleInputChange('sarjNo', e.target.value)}
-              placeholder="Şarj numarasını girin"
-              className="form-input"
-            />
-          </div>
-          
-          <div className="input-group">
-            <label htmlFor="izlenebilirlikNo">İzlenebilirlik No</label>
-            <input
-              id="izlenebilirlikNo"
-              type="text"
-              value={qrData.izlenebilirlikNo}
-              onChange={(e) => handleInputChange('izlenebilirlikNo', e.target.value)}
-              placeholder="İzlenebilirlik numarasını girin"
-              className="form-input"
-            />
-          </div>
-          
+        {/* Üst Satır: Ürün Kodu ve İzlenebilirlik No */}
+        <div className="top-row">
           <div className="input-group">
             <label htmlFor="urunKodu">Ürün Kodu</label>
             <input
@@ -157,30 +344,224 @@ const QRGenerator = () => {
               onChange={(e) => handleInputChange('urunKodu', e.target.value)}
               placeholder="Ürün kodunu girin"
               className="form-input"
+              tabIndex={1}
             />
           </div>
           
           <div className="input-group">
-            <label htmlFor="input5">Ek Bilgi 1</label>
+            <label htmlFor="izlenebilirlikNo">İzlenebilirlik No</label>
+            <div className="tracking-input-container">
+              <input
+                type="text"
+                value={qrData.izlenebilirlikNo.slice(0, -1)}
+                readOnly
+                className="tracking-prefix"
+              />
+              <input
+                id="userDigit"
+                type="text"
+                value={userDigit}
+                onChange={(e) => {
+                  const value = e.target.value.slice(-1)
+                  if (/^[0-9]$/.test(value) || value === '') {
+                    setUserDigit(value)
+                  }
+                }}
+                placeholder="0"
+                maxLength={1}
+                className="tracking-suffix"
+              />
+            </div>
+            <div className="tracking-info">
+              <small>🕐 Otomatik: {qrData.izlenebilirlikNo.slice(0, 3)} (Gün) + {qrData.izlenebilirlikNo.slice(3, 5)} (Yıl) + {qrData.izlenebilirlikNo.slice(5, 6)} (Vardiya) | 👤 Sizin: Son hane</small>
+            </div>
+          </div>
+        </div>
+        
+        <div className="input-grid">
+          <div className="input-group">
+            <label htmlFor="tarih">Tarih (Sunucu)</label>
             <input
-              id="input5"
-              type="text"
-              value={qrData.input5}
-              onChange={(e) => handleInputChange('input5', e.target.value)}
-              placeholder="Ek bilgi girin"
-              className="form-input"
+              id="tarih"
+              type="date"
+              value={qrData.tarih}
+              readOnly
+              className="form-input server-date"
+              title="Sunucudan otomatik çekilir"
+              tabIndex={2}
             />
           </div>
           
-          <div className="input-group">
-            <label htmlFor="input6">Ek Bilgi 2</label>
-            <input
+          <div className="input-group multi-batch-group">
+            <div className="batch-header">
+              <label>Şarj Numaraları & Üretim Adetleri</label>
+            </div>
+            
+            <div className="batch-list">
+              {batchNumbers.map((batch, index) => (
+                <div key={batch.id} className="batch-item">
+                  <div className="batch-controls">
+                    <div className="batch-number-container">
+                      <input
+                        type="text"
+                        value={batch.year}
+                        onChange={(e) => {
+                          const value = e.target.value.slice(-2)
+                          if (/^\d{0,2}$/.test(value)) {
+                            updateBatchNumber(batch.id, 'year', value)
+                          }
+                        }}
+                        placeholder="25"
+                        maxLength={2}
+                        className="batch-segment year-segment"
+                        title="Yıl (2 hane)"
+                        tabIndex={100 + index * 10 + 1}
+                      />
+                      <select
+                        value={batch.af}
+                        onChange={(e) => updateBatchNumber(batch.id, 'af', e.target.value)}
+                        className="batch-segment af-segment"
+                        tabIndex={100 + index * 10 + 2}
+                      >
+                        <option value="A">A</option>
+                        <option value="F">F</option>
+                      </select>
+                      <input
+                        type="text"
+                        value={batch.day}
+                        onChange={(e) => {
+                          const value = e.target.value.slice(-3)
+                          if (/^\d{0,3}$/.test(value) && parseInt(value || '0') <= 366) {
+                            updateBatchNumber(batch.id, 'day', value)
+                          }
+                        }}
+                        placeholder="324"
+                        maxLength={3}
+                        className="batch-segment day-segment"
+                        title="Gün sayısı (1-366)"
+                        tabIndex={100 + index * 10 + 3}
+                      />
+                      <select
+                        value={batch.letter}
+                        onChange={(e) => updateBatchNumber(batch.id, 'letter', e.target.value)}
+                        className="batch-segment letter-segment"
+                        tabIndex={100 + index * 10 + 4}
+                      >
+                        {Array.from({length: 26}, (_, i) => String.fromCharCode(65 + i)).map(letter => (
+                          <option key={letter} value={letter}>{letter}</option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div className="quantity-container">
+                      <label htmlFor={`quantity-${batch.id}`}>Üretim Adeti</label>
+                      <input
+                        id={`quantity-${batch.id}`}
+                        type="number"
+                        value={batch.quantity}
+                        onChange={(e) => {
+                          const value = e.target.value
+                          const numValue = parseInt(value)
+                          if (value === '' || (numValue >= 1 && numValue <= 30)) {
+                            updateBatchNumber(batch.id, 'quantity', value)
+                          }
+                        }}
+                        placeholder="Adet (1-30)"
+                        min="1"
+                        max="30"
+                        className="form-input quantity-input"
+                        title="Üretim adeti (1-30 arası)"
+                        tabIndex={100 + index * 10 + 5}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="batch-actions">
+                    <span className="batch-result">
+                      {generateBatchNumber(batch.year, batch.af, batch.day, batch.letter)} ({batch.quantity} adet)
+                      {batchNumbers.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeBatchNumber(batch.id)}
+                          className="remove-batch-btn"
+                          title="Bu şarj numarasını sil"
+                          tabIndex={100 + index * 10 + 6}
+                        >
+                          × SİL
+                        </button>
+                      )}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="batch-add-section">
+              <button 
+                type="button" 
+                onClick={addBatchNumber}
+                className="add-batch-btn"
+                title="Yeni şarj numarası ekle"
+                tabIndex={200}
+              >
+                + Yeni Şarj Numarası Ekle
+              </button>
+            </div>
+            
+            <div className="batch-digit-container">
+              <label htmlFor="userDigitSarj">İzlenebilirlik Son Hanesi</label>
+              <input
+                id="userDigitSarj"
+                type="text"
+                value={userDigit}
+                onChange={(e) => {
+                  const inputValue = e.target.value
+                  console.log('Input value:', inputValue, 'Length:', inputValue.length)
+                  
+                  if (inputValue === '') {
+                    setUserDigit('')
+                  } else {
+                    // Sadece son karakteri al ve sadece rakam ise kabul et
+                    const lastChar = inputValue.slice(-1)
+                    if (/^[0-9]$/.test(lastChar)) {
+                      setUserDigit(lastChar)
+                    }
+                  }
+                }}
+                onInput={(e) => {
+                  // Input event'inde de kontrol et
+                  const target = e.target as HTMLInputElement
+                  const value = target.value
+                  if (value.length > 1) {
+                    target.value = value.slice(-1)
+                  }
+                }}
+                onKeyDown={(e) => {
+                  // Harf ve özel karakterleri engelle
+                  if (!/[0-9]/.test(e.key) && 
+                      !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+                    e.preventDefault()
+                  }
+                }}
+                placeholder="0"
+                maxLength={1}
+                className="form-input digit-input-sarj"
+                title="İzlenebilirlik No son hanesi (0-9)"
+                tabIndex={200}
+              />
+            </div>
+          </div>
+          
+          <div className="input-group description-group">
+            <label htmlFor="input6">Üretim Bilgileri & Açıklama</label>
+            <textarea
               id="input6"
-              type="text"
               value={qrData.input6}
               onChange={(e) => handleInputChange('input6', e.target.value)}
-              placeholder="Ek bilgi girin"
-              className="form-input"
+              placeholder="Detaylı açıklama yazın..."
+              className="form-textarea"
+              rows={4}
+              tabIndex={210}
             />
           </div>
         </div>
@@ -190,6 +571,7 @@ const QRGenerator = () => {
             onClick={generateQRCode} 
             disabled={!hasData || isGenerating || isSaving}
             className="generate-btn"
+            tabIndex={220}
           >
             {isGenerating ? 'QR Kod Oluşturuluyor...' : isSaving ? 'Kaydediliyor...' : 'QR Kod Oluştur & Kaydet'}
           </button>
@@ -197,6 +579,7 @@ const QRGenerator = () => {
           <button 
             onClick={clearQRCode}
             className="clear-btn"
+            tabIndex={230}
           >
             Yeni Veriler Oluştur
           </button>
@@ -225,8 +608,11 @@ const QRGenerator = () => {
         
         {qrCodeUrl && (
           <div className="download-section">
-            <button onClick={downloadQRCode} className="download-btn">
-              Download QR Code
+            <button onClick={downloadQRCode} className="download-btn" tabIndex={240}>
+              📥 İndir
+            </button>
+            <button onClick={printQRCode} className="print-btn" tabIndex={250}>
+              🖨️ Yazdır
             </button>
           </div>
         )}

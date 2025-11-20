@@ -4,7 +4,7 @@ export interface QRData {
   sarjNo: string
   izlenebilirlikNo: string
   urunKodu: string
-  input5: string
+  uretimAdet: string
   input6: string
   timestamp?: string
 }
@@ -58,7 +58,7 @@ export const saveToGoogleSheets = async (data: QRData): Promise<boolean> => {
       console.log('   - Şarj No:', data.sarjNo) 
       console.log('   - İzlenebilirlik No:', data.izlenebilirlikNo)
       console.log('   - Ürün Kodu:', data.urunKodu)
-      console.log('   - Ek Bilgi 1:', data.input5)
+      console.log('   - Üretim Adeti/Açıklama:', data.uretimAdet)
       console.log('   - Ek Bilgi 2:', data.input6)
       
       // Yerel olarak da kaydet
@@ -77,7 +77,7 @@ export const saveToGoogleSheets = async (data: QRData): Promise<boolean> => {
           sarjNo: data.sarjNo,
           izlenebilirlikNo: data.izlenebilirlikNo,
           urunKodu: data.urunKodu,
-          input5: data.input5,
+          uretimAdet: data.uretimAdet,
           input6: data.input6,
           source: 'QR_APP_FALLBACK'
         })
