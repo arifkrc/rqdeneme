@@ -32,6 +32,15 @@ const QRReader = () => {
 
     try {
       setError('')
+      
+      // Kamera izni kontrolü
+      const permission = await navigator.permissions.query({ name: 'camera' as PermissionName })
+      
+      if (permission.state === 'denied') {
+        setError('Kamera izni reddedildi. Lütfen tarayıcı ayarlarından kamera izni verin.')
+        return
+      }
+      
       setIsCameraActive(true)
       
       qrScannerRef.current = new QrScanner(
@@ -44,12 +53,25 @@ const QRReader = () => {
           returnDetailedScanResult: true,
           highlightScanRegion: true,
           highlightCodeOutline: true,
+          preferredCamera: 'environment' // Arka kamera tercih et
         }
       )
       
       await qrScannerRef.current.start()
     } catch (err) {
-      setError('Kamera erişimi sağlanamadı. Lütfen tarayıcı izinlerini kontrol edin.')
+      let errorMessage = 'Kamera erişimi sağlanamadı.'
+      
+      if (err instanceof Error) {
+        if (err.name === 'NotAllowedError') {
+          errorMessage = 'Kamera izni reddedildi. Lütfen tarayıcı ayarlarından kamera izni verin.'
+        } else if (err.name === 'NotFoundError') {
+          errorMessage = 'Kamera bulunamadı. Lütfen cihazınızda kamera olduğundan emin olun.'
+        } else if (err.name === 'NotReadableError') {
+          errorMessage = 'Kamera kullanımda. Lütfen diğer uygulamaları kapatın.'
+        }
+      }
+      
+      setError(errorMessage)
       setIsCameraActive(false)
       console.error('Camera error:', err)
     }
@@ -170,35 +192,38 @@ const QRReader = () => {
                 const parsedData = JSON.parse(result)
                 return (
                   <div className="structured-result">
+                    <div className="qr-preview">
+                      <h4>📱 QR Kod İçeriği</h4>
+                      <div className="json-display">
+                        <pre>{JSON.stringify(parsedData, null, 2)}</pre>
+                      </div>
+                    </div>
+                    
                     <div className="data-grid">
                       <div className="data-item">
-                        <strong>Tarih:</strong> {parsedData.tarih || 'Belirtilmemiş'}
+                        <strong>📅 Tarih:</strong> {parsedData.tarih || 'Belirtilmemiş'}
                       </div>
                       <div className="data-item">
-                        <strong>Şarj No:</strong> {parsedData.sarjNo || 'Belirtilmemiş'}
+                        <strong>📦 Şarj No(ları):</strong> {parsedData.sarjNo || parsedData.sarjNos || 'Belirtilmemiş'}
                       </div>
                       <div className="data-item">
-                        <strong>İzlenebilirlik No:</strong> {parsedData.izlenebilirlikNo || 'Belirtilmemiş'}
+                        <strong>🔍 İzlenebilirlik No:</strong> {parsedData.izlenebilirlikNo || 'Belirtilmemiş'}
                       </div>
                       <div className="data-item">
-                        <strong>Ürün Kodu:</strong> {parsedData.urunKodu || 'Belirtilmemiş'}
+                        <strong>🏷️ Ürün Kodu:</strong> {parsedData.urunKodu || 'Belirtilmemiş'}
                       </div>
                       {parsedData.uretimAdet && (
                         <div className="data-item">
-                          <strong>Üretim Adeti:</strong> {parsedData.uretimAdet}
+                          <strong>📊 Üretim Bilgisi:</strong> 
+                          <div className="multiline-text">{parsedData.uretimAdet}</div>
                         </div>
                       )}
                       {parsedData.input6 && (
                         <div className="data-item">
-                          <strong>Ek Bilgi 2:</strong> {parsedData.input6}
+                          <strong>📝 Ek Bilgiler:</strong> 
+                          <div className="multiline-text">{parsedData.input6}</div>
                         </div>
                       )}
-                    </div>
-                    <div className="raw-data">
-                      <details>
-                        <summary>Ham Veri</summary>
-                        <p className="result-text">{result}</p>
-                      </details>
                     </div>
                   </div>
                 )

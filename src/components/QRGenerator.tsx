@@ -703,7 +703,6 @@ const QRGenerator = () => {
         {saveStatus === 'success' && (
           <div className="save-status success">
             ✅ Veriler Google Sheets'e gönderildi! Lütfen Google Sheets'inizi kontrol edin.
-            <br/><small>Not: CORS kısıtlamaları nedeniyle yanıt doğrulanamıyor.</small>
           </div>
         )}
         
